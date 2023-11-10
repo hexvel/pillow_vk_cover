@@ -1,4 +1,6 @@
-from test import CoverImage
+import asyncio
+
+from cover import CoverImage
 from vkbottle.api import API
 
 
@@ -10,3 +12,7 @@ async def main():
   
     cover.save_cover_image(123456789) # Сохранение обложки
     await cover.upload_image(api, 123456789) # Обновление вашей обложки на странице
+
+
+if __name__ == '__main__':
+    asyncio.run(main())
