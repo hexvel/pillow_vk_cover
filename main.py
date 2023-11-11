@@ -10,7 +10,6 @@ async def main():
 
     cover = CoverImage(api=api, user_id=user_info.id)
     cover.draw_text()
-    cover.save_cover_image()
     await cover.upload_image()
 
 

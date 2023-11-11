@@ -52,8 +52,6 @@ class CoverImage:
         self.font = ImageFont.truetype('assets/fonts/cover.ttf', 60)
         self.draw.text((self.x / 2, self.y / 2 + 100), date,
                        font=self.font, anchor="ms", fill=self.fill)
-
-    def save_cover_image(self):
         self.img.save(f'assets/images/cover_{self.user_id}_bg.jpg', format="JPEG")
 
     async def get_upload_server(self):
