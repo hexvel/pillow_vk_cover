@@ -1,16 +1,16 @@
 import aiohttp
-
-from io import BytesIO
+from aiohttp import FormData
 from datetime import datetime
 
-from aiohttp import FormData
-
-from vkbottle.user import Message
+from vkbottle import API
 from PIL import Image, ImageDraw, ImageFont
 
 
 class CoverImage:
-    def __init__(self):
+    def __init__(self, api: API, user_id: int):
+        self._api = api
+        self.user_id = user_id
+
         self.fill = "#ffffff"
 
         self.img = Image.open('assets/images/cover_bg.jpg')
@@ -24,16 +24,28 @@ class CoverImage:
                        font=self.font, anchor="ms", fill=self.fill)
 
         weekdays = {
-            1: "Понедельник", 2: "Вторник", 3: "Среда",
-            4: "Четверг", 5: "Пятница", 6: "Суббота",
+            1: "Понедельник", 
+            2: "Вторник", 
+            3: "Среда",
+            4: "Четверг", 
+            5: "Пятница", 
+            6: "Суббота",
             7: "Воскресенье"
         }
 
         months = {
-            1: "января", 2: "февраля", 3: "марта",
-            4: "апреля", 5: "мая", 6: "июнья",
-            7: "июля", 8: "августа", 9: "сентября",
-            10: "октября", 11: "ноября", 12: "декабря"
+            1: "января", 
+            2: "февраля", 
+            3: "марта",
+            4: "апреля", 
+            5: "мая", 
+            6: "июнья",
+            7: "июля", 
+            8: "августа", 
+            9: "сентября",
+            10: "октября",
+            11: "ноября", 
+            12: "декабря"
         }
 
         date = f"{datetime.now().day} {months[datetime.now().month]}, {weekdays[datetime.now().weekday()]}"
@@ -41,25 +53,26 @@ class CoverImage:
         self.draw.text((self.x / 2, self.y / 2 + 100), date,
                        font=self.font, anchor="ms", fill=self.fill)
 
-    def save_cover_image(self, user_id: int):
-        self.img.save(f'assets/images/cover_{user_id}_bg.jpg', format="JPEG")
+    def save_cover_image(self):
+        self.img.save(f'assets/images/cover_{self.user_id}_bg.jpg', format="JPEG")
 
-    @staticmethod
-    async def get_upload_server(_api: Message.ctx_api, user_id: int):
-        upload = await _api.request(
+    async def get_upload_server(self):
+        upload = await self._api.request(
             'photos.getOwnerCoverPhotoUploadServer',
-            dict(user_id=user_id, crop_width=1920, crop_height=768)
+             dict(user_id=self.user_id, crop_width=1920, crop_height=768)
         )
         return upload["response"]["upload_url"]
 
-    async def upload_image(self, _api: Message.ctx_api, user_id: int):
+    async def upload_image(self):
         form_data = FormData()
-        form_data.add_field('photo', open(f'assets/images/cover_{user_id}_bg.jpg', 'rb'))
-        upload_server = await self.get_upload_server(_api, user_id)
+        form_data.add_field('photo', open(f'assets/images/cover_{self.user_id}_bg.jpg', 'rb'))
+        upload_server = await self.get_upload_server()
 
         async with aiohttp.ClientSession() as session:
             async with session.post(upload_server, data=form_data) as response:
                 upload_url = await response.json()
-                data = dict(photo=upload_url["photo"], hash=upload_url["hash"])
 
-                await _api.request('photos.saveOwnerCoverPhoto', data)
+                await self._api.photos.save_owner_cover_photo(
+                    hash=upload_url['hash'],
+                    photo=upload_url['photo']
+                )
