@@ -9,8 +9,8 @@ async def main():
     user_info = await api.account.get_profile_info()
 
     cover = CoverImage(api=api, user_id=user_info.id)
-    cover.draw_text()
-    await cover.upload_image()
+    cover.draw()
+    await cover.upload()
 
 
 if __name__ == '__main__':

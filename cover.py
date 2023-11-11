@@ -1,28 +1,30 @@
-import aiohttp
-from aiohttp import FormData
 from datetime import datetime
+from aiohttp import ClientSession, FormData
+from io import BytesIO
 
 from vkbottle import API
 from PIL import Image, ImageDraw, ImageFont
 
 
 class CoverImage:
-    def __init__(self, api: API, user_id: int):
+    def __init__(self, api: API, user_id: int,
+                 font_size_time=100, font_size_date=60,
+                 font_color="white",
+                 font_path="assets/fonts/cover.ttf",
+                 bg_path="assets/images/cover_bg.jpg") -> None:
         self._api = api
-        self.user_id = user_id
+        self.user_id =  user_id
 
-        self.fill = "#ffffff"
+        self.font_size_time = font_size_time
+        self.font_size_date = font_size_date
+        self.font_color = font_color
+        self.font_path = font_path
 
-        self.img = Image.open('assets/images/cover_bg.jpg')
-        self.x, self.y = self.img.size
+        self.bg_path = bg_path
 
-        self.draw = ImageDraw.Draw(self.img)
-        self.font = ImageFont.truetype('assets/fonts/cover.ttf', 100)
+        self.bytes_image = BytesIO()
 
-    def draw_text(self):
-        self.draw.text((self.x / 2, self.y / 2), datetime.now().strftime("%H:%M"),
-                       font=self.font, anchor="ms", fill=self.fill)
-
+    def draw(self):
         weekdays = {
             1: "Понедельник", 
             2: "Вторник", 
@@ -48,29 +50,39 @@ class CoverImage:
             12: "декабря"
         }
 
-        date = f"{datetime.now().day} {months[datetime.now().month]}, {weekdays[datetime.now().weekday()]}"
-        self.font = ImageFont.truetype('assets/fonts/cover.ttf', 60)
-        self.draw.text((self.x / 2, self.y / 2 + 100), date,
-                       font=self.font, anchor="ms", fill=self.fill)
-        self.img.save(f'assets/images/cover_{self.user_id}_bg.jpg', format="JPEG")
+        image = Image.open(self.bg_path).resize((1920, 768))
+        draw = ImageDraw.Draw(image)
 
-    async def get_upload_server(self):
+        font_time = ImageFont.truetype(self.font_path, self.font_size_time)
+        font_date = ImageFont.truetype(self.font_path, self.font_size_date)
+
+        date = datetime.now()
+        time = date.strftime("%H:%M")
+        date = f"{date.day} {months[date.month]}, {weekdays[date.weekday()]}"
+
+        x, y = image.size
+
+        draw.text((x / 2, y / 2), time, self.font_color, font_time, "ms")
+        draw.text((x / 2, y / 2 + 100), date, self.font_color, font_date, "ms")
+        
+        image.save(self.bytes_image, "PNG")
+        self.bytes_image.seek(0)
+    
+    async def upload(self):
         upload = await self._api.request(
             'photos.getOwnerCoverPhotoUploadServer',
              dict(user_id=self.user_id, crop_width=1920, crop_height=768)
         )
-        return upload["response"]["upload_url"]
 
-    async def upload_image(self):
-        form_data = FormData()
-        form_data.add_field('photo', open(f'assets/images/cover_{self.user_id}_bg.jpg', 'rb'))
-        upload_server = await self.get_upload_server()
+        upload_url = upload['response']['upload_url']
+        data = FormData()
+        data.add_field("photo", self.bytes_image)
 
-        async with aiohttp.ClientSession() as session:
-            async with session.post(upload_server, data=form_data) as response:
-                upload_url = await response.json()
+        async with ClientSession() as session:
+            async with session.post(upload_url, data=data) as response:
+                response_data = await response.json()
 
                 await self._api.photos.save_owner_cover_photo(
-                    hash=upload_url['hash'],
-                    photo=upload_url['photo']
+                    hash=response_data['hash'],
+                    photo=response_data['photo']
                 )
