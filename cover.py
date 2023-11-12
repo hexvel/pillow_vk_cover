@@ -22,7 +22,7 @@ class CoverImage:
 
         self.bg_path = bg_path
 
-        self.bytes_image = BytesIO()
+        self.bytes_image = None
 
     def draw(self):
         weekdays = {
@@ -64,7 +64,8 @@ class CoverImage:
 
         draw.text((x / 2, y / 2), time, self.font_color, font_time, "ms")
         draw.text((x / 2, y / 2 + 100), date, self.font_color, font_date, "ms")
-        
+
+        self.bytes_image = BytesIO()
         image.save(self.bytes_image, "PNG")
         self.bytes_image.seek(0)
     
