@@ -7,49 +7,51 @@ from PIL import Image, ImageDraw, ImageFont
 
 
 class CoverImage:
-    def __init__(self, api: API, user_id: int,
+    def __init__(self, api: API, user_id: int, cover_id=1,
                  font_size_time=100, font_size_date=60,
                  font_color="white",
                  font_path="assets/fonts/cover.ttf",
-                 bg_path="assets/images/cover_bg.jpg") -> None:
+                 bg_path=f"assets/images/cover_bg") -> None:
         self._api = api
-        self.user_id =  user_id
+        self.user_id = user_id
 
         self.font_size_time = font_size_time
         self.font_size_date = font_size_date
         self.font_color = font_color
         self.font_path = font_path
 
+        self.cover_id = cover_id
         self.bg_path = bg_path
 
         self.bytes_image = None
 
     def draw(self):
         weekdays = {
-            0: "Понедельник", 
-            1: "Вторник", 
+            0: "Понедельник",
+            1: "Вторник",
             2: "Среда",
-            3: "Четверг", 
-            4: "Пятница", 
+            3: "Четверг",
+            4: "Пятница",
             5: "Суббота",
             6: "Воскресенье"
         }
 
         months = {
-            1: "января", 
-            2: "февраля", 
+            1: "января",
+            2: "февраля",
             3: "марта",
-            4: "апреля", 
-            5: "мая", 
+            4: "апреля",
+            5: "мая",
             6: "июнья",
-            7: "июля", 
-            8: "августа", 
+            7: "июля",
+            8: "августа",
             9: "сентября",
             10: "октября",
-            11: "ноября", 
+            11: "ноября",
             12: "декабря"
         }
 
+        self.bg_path += f".theme-{self.cover_id}.jpg"
         image = Image.open(self.bg_path).resize((1920, 768))
         draw = ImageDraw.Draw(image)
 
@@ -68,11 +70,11 @@ class CoverImage:
         self.bytes_image = BytesIO()
         image.save(self.bytes_image, "PNG")
         self.bytes_image.seek(0)
-    
+
     async def upload(self):
         upload = await self._api.request(
             'photos.getOwnerCoverPhotoUploadServer',
-             dict(user_id=self.user_id, crop_width=1920, crop_height=768)
+            dict(user_id=self.user_id, crop_width=1920, crop_height=768)
         )
 
         upload_url = upload['response']['upload_url']
