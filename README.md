@@ -30,4 +30,4 @@ await cover.upload(api=api, user_id=user_info.id)
 ```
 
 ## Примечание
-Не забудьте заменить "token" на ваш собственный токен VK API и указать правильный идентификатор пользователя в методах save_cover_image() и upload_image().
+Не забудьте заменить "token" на ваш собственный токен VK API.
