@@ -9,7 +9,7 @@
 ## Использование
 1. Импортируйте необходимые модули:
 ```py
-from test import CoverImage
+from cover import CoverImage
 from vkbottle.api import API
 ```
 
@@ -20,7 +20,7 @@ cover = CoverImage()
 
 4. Создайте шаблон обложки с помощью метода draw_text():
 ```py
-cover.draw_text()
+cover.draw()
 ```
 
 5. Сохраните обложку на диск с помощью метода save_cover_image():
@@ -28,10 +28,12 @@ cover.draw_text()
 cover.save_cover_image(123456789)  # Здесь 123456789 - идентификатор пользователя
 ```
 
-6. Обновите обложку на странице VK с помощью метода upload_image() и объекта api:
+6. Обновите обложку на странице VK с помощью метода upload() и объекта api с user_id:
 ```py
-api = API(token="token")  # Здесь "token" - ваш токен VK API
-await cover.upload_image(api, 123456789)  # Здесь 123456789 - идентификатор пользователя
+api = API(token="token")
+user_info = await api.account.get_profile_info()
+
+await cover.upload(api=api, user_id=user_info.id)
 ```
 
 ## Примечание
