@@ -6,12 +6,11 @@ from vkbottle.api import API
 
 async def main():
     api = API(token="token")
-    cover = CoverImage() # Создание экземпляра класса
-  
-    cover.draw_text() # Создание всего шаблона обложки
-  
-    cover.save_cover_image(123456789) # Сохранение обложки
-    await cover.upload_image(api, 123456789) # Обновление вашей обложки на странице
+    user_info = await api.account.get_profile_info()
+
+    cover = CoverImage(api=api, user_id=user_info.id)
+    cover.draw()
+    await cover.upload()
 
 
 if __name__ == '__main__':
